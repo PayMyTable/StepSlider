@@ -33,6 +33,8 @@ void withoutCAAnimation(withoutAnimationBlock code)
     CAShapeLayer *_trackLayer;
     CAShapeLayer *_sliderCircleLayer;
     NSMutableArray <CAShapeLayer *> *_trackCirclesArray;
+    NSMutableArray <CATextLayer *> *_trackTitlesArray;
+    NSMutableArray <CATextLayer *> *_trackCheckArray;
     
     BOOL animateLayouts;
     
@@ -78,13 +80,13 @@ void withoutCAAnimation(withoutAnimationBlock code)
 
 - (void)addLayers
 {
-    _dotsInteractionEnabled = YES;
-    _trackCirclesArray = [[NSMutableArray alloc] init];
+    _trackCirclesArray  = [[NSMutableArray alloc] init];
+    _trackTitlesArray   = [[NSMutableArray alloc] init];
+    _trackCheckArray    = [[NSMutableArray alloc] init];
     
     _trackLayer = [CAShapeLayer layer];
     _sliderCircleLayer = [CAShapeLayer layer];
-    _sliderCircleLayer.contentsScale = [UIScreen mainScreen].scale;
-
+    
     [self.layer addSublayer:_sliderCircleLayer];
     [self.layer addSublayer:_trackLayer];
 }
@@ -92,14 +94,20 @@ void withoutCAAnimation(withoutAnimationBlock code)
 - (void)generalSetup
 {
     [self addLayers];
-    
-    _maxCount           = 4;
-    _index              = 2;
-    _trackHeight        = 4.f;
-    _trackCircleRadius  = 5.f;
-    _sliderCircleRadius = 12.5f;
-    _trackColor         = [UIColor colorWithWhite:0.41f alpha:1.f];
-    _sliderCircleColor  = [UIColor whiteColor];
+
+    _maxCount               = 4;
+    _index                  = 2;
+    _trackHeight            = 4.f;
+    _trackCircleRadius      = 5.f;
+    _sliderCircleRadius     = 12.5f;
+    _trackColor             = [UIColor colorWithWhite:0.41f alpha:1.f];
+    _sliderCircleColor      = [UIColor whiteColor];
+    _titleColorNormal       = [UIColor blackColor];
+    _titleColorSelected     = [UIColor blackColor];
+    _titleBackgroundColor   = [UIColor clearColor];
+    _checkColor             = [UIColor whiteColor];
+    _titleFontSize          = 12;
+    _checkFontSize          = 24;
     
     [self setNeedsLayout];
 }
@@ -114,6 +122,8 @@ void withoutCAAnimation(withoutAnimationBlock code)
     CGFloat stepWidth       = contentFrame.size.width / (self.maxCount - 1);
     CGFloat circleFrameSide = self.trackCircleRadius * 2.f;
     CGFloat sliderDiameter  = self.sliderCircleRadius * 2.f;
+    CGFloat sliderFrameSide = fmaxf(self.sliderCircleRadius * 2.f, 44.f);
+    CGRect  sliderDrawRect  = CGRectMake((sliderFrameSide - sliderDiameter) / 2.f, (sliderFrameSide - sliderDiameter) / 2.f, sliderDiameter, sliderDiameter);
     
     CGPoint oldPosition = _sliderCircleLayer.position;
     CGPathRef oldPath   = _trackLayer.path;
@@ -122,24 +132,14 @@ void withoutCAAnimation(withoutAnimationBlock code)
         [CATransaction begin];
         [CATransaction setValue: (id) kCFBooleanTrue forKey: kCATransactionDisableActions];
     }
+    
+    // Slider Circle
 
-    _sliderCircleLayer.path     = NULL;
-    _sliderCircleLayer.contents = nil;
-
-    if (self.sliderCircleImage) {
-        _sliderCircleLayer.frame    = CGRectMake(0.f, 0.f, fmaxf(self.sliderCircleImage.size.width, 44.f), fmaxf(self.sliderCircleImage.size.height, 44.f));
-        _sliderCircleLayer.contents = (__bridge id)self.sliderCircleImage.CGImage;
-        _sliderCircleLayer.contentsGravity = kCAGravityCenter;
-    } else {
-        CGFloat sliderFrameSide = fmaxf(self.sliderCircleRadius * 2.f, 44.f);
-        CGRect  sliderDrawRect  = CGRectMake((sliderFrameSide - sliderDiameter) / 2.f, (sliderFrameSide - sliderDiameter) / 2.f, sliderDiameter, sliderDiameter);
-        
-        _sliderCircleLayer.frame     = CGRectMake(0.f, 0.f, sliderFrameSide, sliderFrameSide);
-        _sliderCircleLayer.path      = [UIBezierPath bezierPathWithRoundedRect:sliderDrawRect cornerRadius:sliderFrameSide / 2].CGPath;
-        _sliderCircleLayer.fillColor = [self.sliderCircleColor CGColor];
-    }
-    _sliderCircleLayer.position = CGPointMake(contentFrame.origin.x + stepWidth * self.index , (contentFrame.size.height ) / 2.f);
-
+    _sliderCircleLayer.frame     = CGRectMake(0.f, 0.f, sliderFrameSide, sliderFrameSide);
+    _sliderCircleLayer.path      = [UIBezierPath bezierPathWithRoundedRect:sliderDrawRect cornerRadius:sliderFrameSide / 2].CGPath;
+    _sliderCircleLayer.fillColor = [self.sliderCircleColor CGColor];
+    _sliderCircleLayer.position  = CGPointMake(contentFrame.origin.x + stepWidth * self.index , (contentFrame.size.height ) / 2.f);
+    
     if (animated) {
         CABasicAnimation *basicSliderAnimation = [CABasicAnimation animationWithKeyPath:@"position"];
         basicSliderAnimation.duration = [CATransaction animationDuration];
@@ -147,6 +147,8 @@ void withoutCAAnimation(withoutAnimationBlock code)
         [_sliderCircleLayer addAnimation:basicSliderAnimation forKey:@"position"];
     }
     
+    // Track Layer
+
     _trackLayer.frame = CGRectMake(contentFrame.origin.x,
                                    (contentFrame.size.height - self.trackHeight) / 2.f,
                                    contentFrame.size.width,
@@ -166,10 +168,14 @@ void withoutCAAnimation(withoutAnimationBlock code)
     if (_trackCirclesArray.count > self.maxCount) {
         
         for (NSUInteger i = self.maxCount; i < _trackCirclesArray.count; i++) {
-            [_trackCirclesArray[i] removeFromSuperlayer];
+            [_trackCirclesArray[i]  removeFromSuperlayer];
+            [_trackTitlesArray[i]   removeFromSuperlayer];
+            [_trackCheckArray[i]    removeFromSuperlayer];
         }
         
-        _trackCirclesArray = [[_trackCirclesArray subarrayWithRange:NSMakeRange(0, self.maxCount)] mutableCopy];
+        _trackCirclesArray  = [[_trackCirclesArray  subarrayWithRange:NSMakeRange(0, self.maxCount)] mutableCopy];
+        _trackTitlesArray   = [[_trackTitlesArray   subarrayWithRange:NSMakeRange(0, self.maxCount)] mutableCopy];
+        _trackCheckArray    = [[_trackCheckArray    subarrayWithRange:NSMakeRange(0, self.maxCount)] mutableCopy];
     }
     
     NSTimeInterval animationTimeDiff = left ? [CATransaction animationDuration] / indexDiff : -[CATransaction animationDuration] / indexDiff;
@@ -177,19 +183,55 @@ void withoutCAAnimation(withoutAnimationBlock code)
     
     for (NSUInteger i = 0; i < self.maxCount; i++) {
         CAShapeLayer *trackCircle;
+        CATextLayer  *trackTitle;
+        CATextLayer  *trackCheck;
         
         if (i < _trackCirclesArray.count) {
             trackCircle = _trackCirclesArray[i];
+            trackTitle  = _trackTitlesArray[i];
+            trackCheck  = _trackCheckArray[i];
+            
         } else {
-            trackCircle       = [CAShapeLayer layer];
+            trackCircle = [CAShapeLayer layer];
+            trackTitle  = [CATextLayer  layer];
+            trackCheck  = [CATextLayer  layer];
 
             [self.layer addSublayer:trackCircle];
+            [self.layer addSublayer:trackTitle ];
+            [self.layer addSublayer:trackCheck ];
             [_trackCirclesArray addObject:trackCircle];
+            [_trackTitlesArray  addObject:trackTitle ];
+            [_trackCheckArray   addObject:trackCheck ];
         }
         
+        // Slider Circle
+
         trackCircle.frame    = CGRectMake(0.f, 0.f, circleFrameSide, circleFrameSide);
         trackCircle.path     = [UIBezierPath bezierPathWithRoundedRect:trackCircle.bounds cornerRadius:circleFrameSide / 2].CGPath;
         trackCircle.position = CGPointMake(contentFrame.origin.x + stepWidth * i, contentFrame.size.height / 2.f);
+        
+        // Slider Check
+
+        trackCheck.contentsScale    = [[UIScreen mainScreen] scale];
+        trackCheck.frame            = CGRectMake(0.f, 0.f, circleFrameSide, circleFrameSide);
+        trackCheck.position         = CGPointMake(contentFrame.origin.x + stepWidth * i, circleFrameSide - 5);
+        trackCheck.font             = CFBridgingRetain([UIFont boldSystemFontOfSize:self.checkFontSize].fontName);
+        trackCheck.fontSize         = self.checkFontSize;
+        trackCheck.foregroundColor  = self.checkColor.CGColor;
+        trackCheck.alignmentMode    = kCAAlignmentCenter;
+        trackCheck.wrapped          = NO;
+        
+        // Slider Label
+
+        trackTitle.contentsScale    = [[UIScreen mainScreen] scale];
+        trackTitle.frame            = CGRectMake(0.f, 0.f, circleFrameSide * 2, 15);
+        trackTitle.position         = CGPointMake(contentFrame.origin.x + stepWidth * i, -5);
+        trackTitle.font             = CFBridgingRetain([UIFont boldSystemFontOfSize:self.titleFontSize].fontName);
+        trackTitle.fontSize         = self.titleFontSize;
+        trackTitle.foregroundColor  = (i == self.index ? self.titleColorSelected.CGColor : self.titleColorNormal.CGColor);
+        trackTitle.backgroundColor  = self.titleBackgroundColor.CGColor;
+        trackTitle.alignmentMode    = kCAAlignmentCenter;
+        trackTitle.wrapped          = NO;
         
         if (animated) {
             CGColorRef newColor = [self trackCircleColor:trackCircle];
@@ -210,7 +252,6 @@ void withoutCAAnimation(withoutAnimationBlock code)
         } else {
             trackCircle.fillColor = [self trackCircleColor:trackCircle];
         }
-        
     }
     
     if (!animated) {
@@ -245,7 +286,6 @@ void withoutCAAnimation(withoutAnimationBlock code)
 
 - (void)updateIndex
 {
-    NSAssert(_maxCount > 1, @"_maxCount must be greater than 1!");
     if (_index > (_maxCount - 1)) {
         _index = _maxCount - 1;
         [self sendActionsForControlEvents:UIControlEventValueChanged];
@@ -286,10 +326,10 @@ void withoutCAAnimation(withoutAnimationBlock code)
 {
     startTouchPosition = [touch locationInView:self];
     startSliderPosition = _sliderCircleLayer.position;
-
+    
     if (CGRectContainsPoint(_sliderCircleLayer.frame, startTouchPosition)) {
         return YES;
-    } else if (self.isDotsInteractionEnabled) {
+    } else {
         for (NSUInteger i = 0; i < _trackCirclesArray.count; i++) {
             CALayer *dot = _trackCirclesArray[i];
             
@@ -309,7 +349,6 @@ void withoutCAAnimation(withoutAnimationBlock code)
                 return NO;
             }
         }
-        return NO;
     }
     return NO;
 }
@@ -367,6 +406,22 @@ void withoutCAAnimation(withoutAnimationBlock code)
     self.index = index;
 }
 
+- (void)setTitleForIndex:(NSUInteger)index title:(NSString*)title {
+    [self layoutSubviews];
+
+    if (_trackTitlesArray.count > index) {
+        _trackTitlesArray[index].string = title;
+    }
+}
+
+- (void)setCheckForIndex:(NSUInteger)index title:(NSString*)title {
+    [self layoutSubviews];
+
+    if (_trackCheckArray.count > index) {
+        _trackCheckArray[index].string = title;
+    }
+}
+
 - (void)setTintColor:(UIColor *)tintColor
 {
     [super setTintColor:tintColor];
@@ -380,6 +435,6 @@ GENERATE_SETTER(trackCircleRadius, CGFloat, setTrackCircleRadius, [self updateDi
 GENERATE_SETTER(sliderCircleRadius, CGFloat, setSliderCircleRadius, [self updateMaxRadius];);
 GENERATE_SETTER(trackColor, UIColor*, setTrackColor, );
 GENERATE_SETTER(sliderCircleColor, UIColor*, setSliderCircleColor, );
-GENERATE_SETTER(sliderCircleImage, UIImage*, setSliderCircleImage, );
+
 
 @end

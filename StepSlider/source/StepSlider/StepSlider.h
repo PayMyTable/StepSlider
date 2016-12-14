@@ -13,7 +13,7 @@ IB_DESIGNABLE
 @interface StepSlider : UIControl
 
 /**
- *  Maximum amount of dots in slider. Must be `2` or greater.
+ *  Maximum amount of dots in slider.
  */
 @property (nonatomic) IBInspectable NSUInteger maxCount;
 
@@ -38,11 +38,6 @@ IB_DESIGNABLE
  */
 @property (nonatomic) IBInspectable CGFloat sliderCircleRadius;
 
-/**
- *  A Boolean value that determines whether user interaction with dots are ignored. Default value is `YES`.
- */
-@property (nonatomic, getter=isDotsInteractionEnabled) IBInspectable BOOL dotsInteractionEnabled;
-
 
 /**
  *  Color of the slider slider.
@@ -50,12 +45,39 @@ IB_DESIGNABLE
 @property (nonatomic, strong) IBInspectable UIColor *trackColor;
 
 /**
- *  Color of the slider main wheel.
+ *  Color og the slider main wheel.
  */
 @property (nonatomic, strong) IBInspectable UIColor *sliderCircleColor;
 
+/**
+ * Title Text Font Size
+ */
+@property (nonatomic) IBInspectable CGFloat titleFontSize;
 
-@property (nonatomic, strong) IBInspectable UIImage *sliderCircleImage;
+/**
+ * Title (Selected) Text Color
+ */
+@property (nonatomic, strong) IBInspectable UIColor *titleColorSelected;
+
+/**
+ * Title (Normal) Text Color
+ */
+@property (nonatomic, strong) IBInspectable UIColor *titleColorNormal;
+
+/**
+ * Title Text Background Color
+ */
+@property (nonatomic, strong) IBInspectable UIColor *titleBackgroundColor;
+
+/**
+ * Check Check Font Size
+ */
+@property (nonatomic) IBInspectable CGFloat checkFontSize;
+
+/**
+ * Title Check Color
+ */
+@property (nonatomic, strong) IBInspectable UIColor *checkColor;
 
 /**
  *  Set the `index` property to parameter value.
@@ -64,5 +86,9 @@ IB_DESIGNABLE
  *  @param animated `YES` to animate changing of the `index` property.
  */
 - (void)setIndex:(NSUInteger)index animated:(BOOL)animated;
+
+
+- (void)setTitleForIndex:(NSUInteger)index title:(NSString*)title;
+- (void)setCheckForIndex:(NSUInteger)index title:(NSString*)title;
 
 @end
