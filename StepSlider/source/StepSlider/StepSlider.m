@@ -414,16 +414,16 @@ void withoutCAAnimation(withoutAnimationBlock code)
     }
 }
 
-- (void)setCheckBox:(NSUInteger)index enabled:(Boolean)enabled {
-  [self setTitleForIndex:index title: (enabled ? @"✓" : @"")];
-}
-
 - (void)setCheckForIndex:(NSUInteger)index title:(NSString*)title {
     [self layoutSubviews];
 
     if (_trackCheckArray.count > index) {
         _trackCheckArray[index].string = title;
     }
+}
+
+- (void)setCheckBox:(NSUInteger)index enabled:(Boolean)enabled {
+  [self setCheckForIndex:index title: (enabled ? @"✓" : @"")];
 }
 
 - (void)setTintColor:(UIColor *)tintColor
