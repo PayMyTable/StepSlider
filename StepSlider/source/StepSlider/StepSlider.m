@@ -414,6 +414,10 @@ void withoutCAAnimation(withoutAnimationBlock code)
     }
 }
 
+- (void)setCheckBox:(NSUInteger)index enabled:(Boolean)enabled {
+  [self setTitleForIndex:index title: (enabled ? @"✓" : @"")];
+}
+
 - (void)setCheckForIndex:(NSUInteger)index title:(NSString*)title {
     [self layoutSubviews];
 

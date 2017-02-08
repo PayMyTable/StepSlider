@@ -87,8 +87,8 @@ IB_DESIGNABLE
  */
 - (void)setIndex:(NSUInteger)index animated:(BOOL)animated;
 
-
 - (void)setTitleForIndex:(NSUInteger)index title:(NSString*)title;
 - (void)setCheckForIndex:(NSUInteger)index title:(NSString*)title;
+- (void)setCheckBox:(NSUInteger)index enabled:(Boolean)enabled;
 
 @end
